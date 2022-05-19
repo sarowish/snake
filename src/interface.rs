@@ -74,20 +74,21 @@ pub fn run_ui() -> Result<(), Box<dyn Error>> {
                     .title("Snake"),
             );
             f.render_widget(text, chunks[0]);
-            if game.is_game_over() {
-                let text = Spans::from(vec![
+            let text = if game.is_game_over() {
+                Spans::from(vec![
                     Span::raw("Game is over. press "),
                     Span::styled("q", Style::default().fg(Color::Red)),
                     Span::raw(" to quit, "),
                     Span::raw("press "),
                     Span::styled("r", Style::default().fg(Color::Yellow)),
                     Span::raw(" to replay"),
-                ]);
-                f.render_widget(Paragraph::new(text), chunks[1]);
+                ])
             } else if !game.is_running() {
-                let text = Span::raw("Paused");
-                f.render_widget(Paragraph::new(text), chunks[1]);
-            }
+                Spans::from(Span::raw("Paused"))
+            } else {
+                Spans::from(Span::raw("Controls: hjkl, Quit: q, Pause: p"))
+            };
+            f.render_widget(Paragraph::new(text), chunks[1]);
         })?;
 
         match events.next()? {
