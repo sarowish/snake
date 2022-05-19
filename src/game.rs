@@ -31,7 +31,7 @@ pub struct Game {
 
 impl Default for Game {
     fn default() -> Self {
-        Game::new(5, 5, Direction::Right, 20, 20, true)
+        Game::new(5, 5, Direction::Right, 30, 20, true)
     }
 }
 

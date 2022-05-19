@@ -45,7 +45,7 @@ impl Default for Events {
             if tx1.send(Event::Tick).is_err() {
                 break;
             }
-            thread::sleep(Duration::from_millis(115));
+            thread::sleep(Duration::from_millis(105));
         });
 
         Events {
