@@ -44,8 +44,8 @@ impl Game {
         let mut snake = VecDeque::new();
         snake.push_back(Point { x, y });
         let mut rng = thread_rng();
-        let apple_x = rng.gen_range(0, width);
-        let apple_y = rng.gen_range(0, height);
+        let apple_x = rng.gen_range(0..width);
+        let apple_y = rng.gen_range(0..height);
         let apple = Point {
             x: apple_x,
             y: apple_y,
@@ -124,8 +124,8 @@ impl Game {
 
     fn gen_apple(&self) -> Point {
         let mut rng = thread_rng();
-        let x = rng.gen_range(0, self.board.0);
-        let y = rng.gen_range(0, self.board.1);
+        let x = rng.gen_range(0..self.board.0);
+        let y = rng.gen_range(0..self.board.1);
         Point { x, y }
     }
 
