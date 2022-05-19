@@ -26,25 +26,21 @@ pub fn run_ui() -> Result<(), Box<dyn Error>> {
 
     let mut game: Game = Default::default();
     let mut dir = game.dir.clone();
+    let apple_char = "🍎";
+    let snake_char = "██";
 
     loop {
-        let mut grid = vec![vec![Span::raw(" "); game.board.0 as usize]; game.board.1 as usize];
+        let mut grid = vec![vec![Span::raw("  "); game.board.0 as usize]; game.board.1 as usize];
 
         grid[game.apple.y as usize][game.apple.x as usize] =
-            Span::styled("*", Style::default().fg(Color::Magenta));
+            Span::styled(apple_char, Style::default().fg(Color::Red));
 
-        let head = match game.dir {
-            Direction::Up => "▲",
-            Direction::Down => "▼",
-            Direction::Right => "▶",
-            Direction::Left => "◀",
-        };
         grid[game.snake.back().unwrap().y as usize][game.snake.back().unwrap().x as usize] =
-            Span::styled(head, Style::default().fg(Color::Blue));
+            Span::styled(snake_char, Style::default().fg(Color::Blue));
 
         for p in game.snake.iter().rev().skip(1) {
             grid[p.y as usize][p.x as usize] =
-                Span::styled("■", Style::default().fg(Color::Yellow));
+                Span::styled(snake_char, Style::default().fg(Color::Yellow));
         }
 
         terminal.draw(|f| {
@@ -52,7 +48,7 @@ pub fn run_ui() -> Result<(), Box<dyn Error>> {
                 Rect {
                     x: 0,
                     y: 0,
-                    width: (game.board.0 + 2) as u16,
+                    width: (game.board.0 * 2 + 2) as u16,
                     height: (game.board.1 + 2) as u16,
                 },
                 Rect {
