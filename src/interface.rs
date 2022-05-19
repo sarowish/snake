@@ -62,7 +62,7 @@ pub fn run_ui() -> Result<(), Box<dyn Error>> {
             for line in grid {
                 text.extend(Text::from(Spans::from(line)));
             }
-            let text = Text::from(text);
+
             let text = Paragraph::new(text).block(
                 Block::default()
                     .border_style(Style::default().fg(if game.is_game_over() {
@@ -91,24 +91,20 @@ pub fn run_ui() -> Result<(), Box<dyn Error>> {
         })?;
 
         match events.next()? {
-            Event::Input(input) => {
-                if let Key::Char(c) = input {
-                    match c {
-                        'q' => break,
-                        'h' => dir = Direction::Left,
-                        'j' => dir = Direction::Down,
-                        'k' => dir = Direction::Up,
-                        'l' => dir = Direction::Right,
-                        'r' => {
-                            game = Default::default();
-                            dir = game.dir.clone();
-                            continue;
-                        }
-                        'p' => game.toggle_pause(),
-                        _ => {}
-                    }
+            Event::Input(Key::Char(c)) => match c {
+                'q' => break,
+                'h' => dir = Direction::Left,
+                'j' => dir = Direction::Down,
+                'k' => dir = Direction::Up,
+                'l' => dir = Direction::Right,
+                'r' => {
+                    game = Default::default();
+                    dir = game.dir.clone();
+                    continue;
                 }
-            }
+                'p' => game.toggle_pause(),
+                _ => {}
+            },
             Event::Tick if game.is_running() => game.move_snake(dir.clone()),
             _ => {}
         }

@@ -134,26 +134,18 @@ impl Game {
     }
 
     pub fn is_running(&self) -> bool {
-        if let State::Running = self.state {
-            true
-        } else {
-            false
-        }
+        matches!(self.state, State::Running)
     }
 
     pub fn is_game_over(&self) -> bool {
-        if let State::GameOver = self.state {
-            true
-        } else {
-            false
-        }
+        matches!(self.state, State::GameOver)
     }
 
     pub fn toggle_pause(&mut self) {
         match self.state {
             State::Paused => self.state = State::Running,
             State::Running => self.state = State::Paused,
-            _ => return,
+            _ => (),
         }
     }
 }
