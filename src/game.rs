@@ -37,19 +37,20 @@ impl Default for Game {
 
 impl Game {
     pub fn new(x: i32, y: i32, dir: Direction, width: i32, height: i32, borders: bool) -> Self {
+        const STARTING_SIZE: i32 = 3;
+
         assert!(
-            x < width && y < height,
+            x - STARTING_SIZE < width && y < height,
             "x and y should be less than size\n"
         );
         let mut snake = VecDeque::new();
-        snake.push_back(Point { x, y });
+        for i in (0..STARTING_SIZE).rev() {
+        snake.push_back(Point::new(x - i, y));
+        }
         let mut rng = thread_rng();
         let apple_x = rng.gen_range(0..width);
         let apple_y = rng.gen_range(0..height);
-        let apple = Point {
-            x: apple_x,
-            y: apple_y,
-        };
+        let apple = Point::new(apple_x, apple_y);
         Game {
             snake,
             dir,
@@ -61,10 +62,7 @@ impl Game {
     }
 
     pub fn move_snake(&mut self, mut dir: Direction) {
-        let mut new_head = Point {
-            x: self.snake.back().unwrap().x,
-            y: self.snake.back().unwrap().y,
-        };
+        let mut new_head = Point::new(self.snake.back().unwrap().x, self.snake.back().unwrap().y);
         if self.dir == Direction::opposite_dir(&dir) {
             dir = self.dir.clone();
         }
@@ -126,7 +124,7 @@ impl Game {
         let mut rng = thread_rng();
         let x = rng.gen_range(0..self.board.0);
         let y = rng.gen_range(0..self.board.1);
-        Point { x, y }
+        Point::new(x, y)
     }
 
     fn game_over(&mut self) {
@@ -154,6 +152,12 @@ impl Game {
 pub struct Point {
     pub x: i32,
     pub y: i32,
+}
+
+impl Point {
+    pub fn new(x: i32, y: i32) -> Self {
+        Self { x, y }
+    }
 }
 
 enum State {
