@@ -16,26 +16,18 @@ pub struct Events {
     _tick_handle: thread::JoinHandle<()>,
 }
 
-pub struct Config {
-    _exit_key: Key,
-    tick_rate: Duration,
-}
-
-impl Default for Config {
-    fn default() -> Config {
-        Config {
-            _exit_key: Key::Char('q'),
-            tick_rate: Duration::from_millis(125),
-        }
-    }
-}
-
 impl Events {
     pub fn new() -> Events {
-        Events::with_config(Config::default())
+        Events::default()
     }
 
-    pub fn with_config(config: Config) -> Events {
+    pub fn next(&self) -> Result<Event, mpsc::RecvError> {
+        self.rx.recv()
+    }
+}
+
+impl Default for Events {
+    fn default() -> Events {
         let (tx, rx) = mpsc::channel();
         let tx1 = mpsc::Sender::clone(&tx);
         let _input_handle = thread::spawn(move || {
@@ -53,7 +45,7 @@ impl Events {
             if tx1.send(Event::Tick).is_err() {
                 break;
             }
-            thread::sleep(config.tick_rate);
+            thread::sleep(Duration::from_millis(115));
         });
 
         Events {
@@ -61,9 +53,5 @@ impl Events {
             _input_handle,
             _tick_handle,
         }
-    }
-
-    pub fn next(&self) -> Result<Event, mpsc::RecvError> {
-        self.rx.recv()
     }
 }

@@ -29,6 +29,10 @@ pub fn run_ui() -> Result<(), Box<dyn Error>> {
 
     loop {
         let mut grid = vec![vec![Span::raw(" "); game.board.0 as usize]; game.board.1 as usize];
+
+        grid[game.apple.y as usize][game.apple.x as usize] =
+            Span::styled("*", Style::default().fg(Color::Magenta));
+
         let head = match game.dir {
             Direction::Up => "▲",
             Direction::Down => "▼",
@@ -37,24 +41,23 @@ pub fn run_ui() -> Result<(), Box<dyn Error>> {
         };
         grid[game.snake.back().unwrap().y as usize][game.snake.back().unwrap().x as usize] =
             Span::styled(head, Style::default().fg(Color::Blue));
+
         for p in game.snake.iter().rev().skip(1) {
             grid[p.y as usize][p.x as usize] =
                 Span::styled("■", Style::default().fg(Color::Yellow));
         }
-        grid[game.apple.y as usize][game.apple.x as usize] =
-            Span::styled("*", Style::default().fg(Color::Magenta));
 
         terminal.draw(|f| {
             let chunks = vec![
                 Rect {
                     x: 0,
                     y: 0,
-                    width: (game.board.1 + 2) as u16,
-                    height: (game.board.0 + 2) as u16,
+                    width: (game.board.0 + 2) as u16,
+                    height: (game.board.1 + 2) as u16,
                 },
                 Rect {
                     x: 0,
-                    y: (game.board.0 + 2) as u16,
+                    y: (game.board.1 + 2) as u16,
                     width: 50,
                     height: 1,
                 },
@@ -85,6 +88,9 @@ pub fn run_ui() -> Result<(), Box<dyn Error>> {
                     Span::raw(" to replay"),
                 ]);
                 f.render_widget(Paragraph::new(text), chunks[1]);
+            } else if !game.is_running() {
+                let text = Span::raw("Paused");
+                f.render_widget(Paragraph::new(text), chunks[1]);
             }
         })?;
 
@@ -97,16 +103,17 @@ pub fn run_ui() -> Result<(), Box<dyn Error>> {
                         'j' => dir = Direction::Down,
                         'k' => dir = Direction::Up,
                         'l' => dir = Direction::Right,
-                        'r' if game.is_game_over() => {
+                        'r' => {
                             game = Default::default();
                             dir = game.dir.clone();
                             continue;
                         }
+                        'p' => game.toggle_pause(),
                         _ => {}
                     }
                 }
             }
-            Event::Tick if !game.is_game_over() => game.move_snake(dir.clone()),
+            Event::Tick if game.is_running() => game.move_snake(dir.clone()),
             _ => {}
         }
     }

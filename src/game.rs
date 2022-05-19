@@ -26,23 +26,26 @@ pub struct Game {
     pub board: (i32, i32),
     borders: bool,
     pub apple: Point,
-    state: bool,
+    state: State,
 }
 
 impl Default for Game {
     fn default() -> Self {
-        Game::new(5, 5, Direction::Right, 20, true)
+        Game::new(5, 5, Direction::Right, 20, 20, true)
     }
 }
 
 impl Game {
-    pub fn new(x: i32, y: i32, dir: Direction, size: i32, borders: bool) -> Self {
-        assert!(x < size && y < size, "x and y should be less than size");
+    pub fn new(x: i32, y: i32, dir: Direction, width: i32, height: i32, borders: bool) -> Self {
+        assert!(
+            x < width && y < height,
+            "x and y should be less than size\n"
+        );
         let mut snake = VecDeque::new();
         snake.push_back(Point { x, y });
         let mut rng = thread_rng();
-        let apple_x = rng.gen_range(0, size);
-        let apple_y = rng.gen_range(0, size);
+        let apple_x = rng.gen_range(0, width);
+        let apple_y = rng.gen_range(0, height);
         let apple = Point {
             x: apple_x,
             y: apple_y,
@@ -50,10 +53,10 @@ impl Game {
         Game {
             snake,
             dir,
-            board: (size, size),
+            board: (width, height),
             borders,
             apple,
-            state: true,
+            state: State::Running,
         }
     }
 
@@ -62,7 +65,7 @@ impl Game {
             x: self.snake.back().unwrap().x,
             y: self.snake.back().unwrap().y,
         };
-        if self.dir == Direction::opposite_dir(&dir) && self.snake.len() != 1 {
+        if self.dir == Direction::opposite_dir(&dir) {
             dir = self.dir.clone();
         }
         match dir {
@@ -75,10 +78,10 @@ impl Game {
             return;
         }
         self.check_overlap(&new_head);
-        self.snake.push_back(new_head);
         if !self.check_apple() {
             self.snake.pop_front();
         }
+        self.snake.push_back(new_head);
         self.dir = dir;
     }
 
@@ -127,11 +130,31 @@ impl Game {
     }
 
     fn game_over(&mut self) {
-        self.state = false;
+        self.state = State::GameOver;
+    }
+
+    pub fn is_running(&self) -> bool {
+        if let State::Running = self.state {
+            true
+        } else {
+            false
+        }
     }
 
     pub fn is_game_over(&self) -> bool {
-        !self.state
+        if let State::GameOver = self.state {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn toggle_pause(&mut self) {
+        match self.state {
+            State::Paused => self.state = State::Running,
+            State::Running => self.state = State::Paused,
+            _ => return,
+        }
     }
 }
 
@@ -139,4 +162,10 @@ impl Game {
 pub struct Point {
     pub x: i32,
     pub y: i32,
+}
+
+enum State {
+    Running,
+    Paused,
+    GameOver,
 }
