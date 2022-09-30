@@ -86,24 +86,24 @@ pub fn run_ui() -> Result<(), Box<dyn Error>> {
             } else if !game.is_running() {
                 Spans::from(Span::raw("Paused"))
             } else {
-                Spans::from(Span::raw("Controls: hjkl, Quit: q, Pause: p"))
+                Spans::from(Span::raw("Controls: hjkl ←↓↑→, Quit: q, Pause: p"))
             };
             f.render_widget(Paragraph::new(text), chunks[1]);
         })?;
 
         match events.next()? {
-            Event::Input(Key::Char(c)) => match c {
-                'q' => break,
-                'h' => dir = Direction::Left,
-                'j' => dir = Direction::Down,
-                'k' => dir = Direction::Up,
-                'l' => dir = Direction::Right,
-                'r' => {
+            Event::Input(key) => match key {
+                Key::Char('q') => break,
+                Key::Char('h') | Key::Left => dir = Direction::Left,
+                Key::Char('j') | Key::Down => dir = Direction::Down,
+                Key::Char('k') | Key::Up => dir = Direction::Up,
+                Key::Char('l') | Key::Right => dir = Direction::Right,
+                Key::Char('r') => {
                     game = Default::default();
                     dir = game.dir.clone();
                     continue;
                 }
-                'p' => game.toggle_pause(),
+                Key::Char('p') => game.toggle_pause(),
                 _ => {}
             },
             Event::Tick if game.is_running() => game.move_snake(dir.clone()),
