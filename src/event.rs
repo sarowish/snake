@@ -17,17 +17,7 @@ pub struct Events {
 }
 
 impl Events {
-    pub fn new() -> Events {
-        Events::default()
-    }
-
-    pub fn next(&self) -> Result<Event, mpsc::RecvError> {
-        self.rx.recv()
-    }
-}
-
-impl Default for Events {
-    fn default() -> Events {
+    pub fn new(speed: f64) -> Events {
         let (tx, rx) = mpsc::channel();
         let tx1 = mpsc::Sender::clone(&tx);
         let _input_handle = thread::spawn(move || {
@@ -43,7 +33,7 @@ impl Default for Events {
             if tx1.send(Event::Tick).is_err() {
                 break;
             }
-            thread::sleep(Duration::from_millis(105));
+            thread::sleep(Duration::from_millis(f64::floor(1000.0 / speed) as u64));
         });
 
         Events {
@@ -51,5 +41,9 @@ impl Default for Events {
             _input_handle,
             _tick_handle,
         }
+    }
+
+    pub fn next(&self) -> Result<Event, mpsc::RecvError> {
+        self.rx.recv()
     }
 }

@@ -1,6 +1,5 @@
 use crate::event::{Event, Events};
-use crate::game::Direction;
-use crate::game::Game;
+use crate::game::{self, Direction, Game};
 use std::{error::Error, io};
 use termion::event::Key;
 use termion::{input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
@@ -15,16 +14,17 @@ use tui::{
     Terminal,
 };
 
-pub fn run_ui() -> Result<(), Box<dyn Error>> {
+pub fn run_ui(options: game::Options) -> Result<(), Box<dyn Error>> {
     let stdout = io::stdout().into_raw_mode()?;
     let stdout = MouseTerminal::from(stdout);
     let stdout = AlternateScreen::from(stdout);
     let backend = TermionBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    let events = Events::new();
+    let events = Events::new(options.speed);
 
-    let mut game: Game = Default::default();
+    let mut game: Game = Game::new(&options);
+
     let mut dir = game.dir.clone();
     let apple_char = "🍎";
     let snake_char = "██";
@@ -99,7 +99,7 @@ pub fn run_ui() -> Result<(), Box<dyn Error>> {
                 Key::Char('k') | Key::Up => dir = Direction::Up,
                 Key::Char('l') | Key::Right => dir = Direction::Right,
                 Key::Char('r') => {
-                    game = Default::default();
+                    game = Game::new(&options);
                     dir = game.dir.clone();
                     continue;
                 }

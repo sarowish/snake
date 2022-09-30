@@ -1,5 +1,34 @@
+use clap::ArgMatches;
 use rand::{thread_rng, Rng};
 use std::collections::VecDeque;
+
+pub struct Options {
+    width: i32,
+    height: i32,
+    head_x: i32,
+    head_y: i32,
+    pub speed: f64,
+    length: i32,
+    direction: Direction,
+    borders: bool,
+}
+
+impl From<ArgMatches> for Options {
+    fn from(matches: ArgMatches) -> Self {
+        let direction = Direction::from(matches.get_one::<String>("direction").unwrap());
+
+        Options {
+            width: *matches.get_one::<i32>("width").unwrap(),
+            height: *matches.get_one::<i32>("height").unwrap(),
+            head_x: *matches.get_one::<i32>("head_x").unwrap(),
+            head_y: *matches.get_one::<i32>("head_y").unwrap(),
+            speed: *matches.get_one::<f64>("speed").unwrap(),
+            length: *matches.get_one::<i32>("length").unwrap(),
+            direction,
+            borders: !matches.get_flag("no_border"),
+        }
+    }
+}
 
 #[derive(PartialEq, Clone)]
 pub enum Direction {
@@ -20,6 +49,18 @@ impl Direction {
     }
 }
 
+impl From<&String> for Direction {
+    fn from(direction: &String) -> Self {
+        match direction.as_str() {
+            "left" => Direction::Left,
+            "right" => Direction::Right,
+            "up" => Direction::Up,
+            "down" => Direction::Down,
+            _ => panic!(),
+        }
+    }
+}
+
 pub struct Game {
     pub snake: VecDeque<Point>,
     pub dir: Direction,
@@ -29,35 +70,53 @@ pub struct Game {
     state: State,
 }
 
-impl Default for Game {
-    fn default() -> Self {
-        Game::new(5, 5, Direction::Right, 30, 20, true)
-    }
-}
-
 impl Game {
-    pub fn new(x: i32, y: i32, dir: Direction, width: i32, height: i32, borders: bool) -> Self {
-        const STARTING_SIZE: i32 = 3;
-
+    pub fn new(options: &Options) -> Self {
         assert!(
-            x - STARTING_SIZE < width && y < height,
-            "x and y should be less than size\n"
+            Game::validate_initial_state(options),
+            "initial state of the snake is invalid"
         );
+
         let mut snake = VecDeque::new();
-        for i in (0..STARTING_SIZE).rev() {
-        snake.push_back(Point::new(x - i, y));
+
+        for i in (0..options.length).rev() {
+            match options.direction {
+                Direction::Up => snake.push_back(Point::new(options.head_x, options.head_y + i)),
+                Direction::Down => snake.push_back(Point::new(options.head_x, options.head_y - i)),
+                Direction::Left => snake.push_back(Point::new(options.head_x + i, options.head_y)),
+                Direction::Right => snake.push_back(Point::new(options.head_x - i, options.head_y)),
+            }
         }
+
         let mut rng = thread_rng();
-        let apple_x = rng.gen_range(0..width);
-        let apple_y = rng.gen_range(0..height);
+        let apple_x = rng.gen_range(0..options.width);
+        let apple_y = rng.gen_range(0..options.height);
         let apple = Point::new(apple_x, apple_y);
         Game {
             snake,
-            dir,
-            board: (width, height),
-            borders,
+            dir: options.direction.clone(),
+            board: (options.width, options.height),
+            borders: options.borders,
             apple,
             state: State::Running,
+        }
+    }
+
+    fn validate_initial_state(options: &Options) -> bool {
+        if options.head_x < 0
+            || options.head_y < 0
+            || options.head_x >= options.width
+            || options.head_y >= options.height
+            || options.length <= 0
+        {
+            return false;
+        }
+
+        match options.direction {
+            Direction::Up => options.head_y + options.length <= options.height,
+            Direction::Down => options.head_y - options.length + 1 >= 0,
+            Direction::Left => options.head_x + options.length <= options.width,
+            Direction::Right => options.head_x - options.length + 1 >= 0,
         }
     }
 
