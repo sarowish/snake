@@ -44,17 +44,22 @@ pub fn run_ui(options: game::Options) -> Result<(), Box<dyn Error>> {
         }
 
         terminal.draw(|f| {
+            let board_width = game.board.0 * 2 + 2;
+            let board_height = game.board.1 + 2;
+            let x = (f.size().width - board_width as u16) / 2;
+            let y = (f.size().height - board_height as u16) / 2;
+
             let chunks = vec![
                 Rect {
-                    x: 0,
-                    y: 0,
+                    x,
+                    y,
                     width: (game.board.0 * 2 + 2) as u16,
                     height: (game.board.1 + 2) as u16,
                 },
                 Rect {
-                    x: 0,
-                    y: (game.board.1 + 2) as u16,
-                    width: 50,
+                    x,
+                    y: y + (game.board.1 + 2) as u16,
+                    width: 38,
                     height: 1,
                 },
             ];
