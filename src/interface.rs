@@ -67,6 +67,8 @@ pub fn run_ui(options: game::Options) -> Result<(), Box<dyn Error>> {
                 Block::default()
                     .border_style(Style::default().fg(if game.is_game_over() {
                         Color::Red
+                    } else if !game.is_running() {
+                        Color::Yellow
                     } else {
                         Color::Green
                     }))
