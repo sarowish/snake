@@ -46,8 +46,31 @@ pub fn run_ui(options: game::Options) -> Result<(), Box<dyn Error>> {
         terminal.draw(|f| {
             let board_width = game.board.0 * 2 + 2;
             let board_height = game.board.1 + 2;
-            let x = (f.size().width - board_width as u16) / 2;
-            let y = (f.size().height - board_height as u16) / 2;
+            let mut x = 0;
+            let mut y = 0;
+            let mut enough_space = true;
+
+            if let Some(res) = f.size().width.checked_sub(board_width as u16) {
+                x = res / 2;
+            } else {
+                enough_space = false;
+            }
+
+            if let Some(res) = f.size().height.checked_sub(board_height as u16 + 1) {
+                y = res / 2;
+            } else {
+                enough_space = false;
+            }
+
+            if !enough_space {
+                if game.is_running() {
+                    game.toggle_pause();
+                }
+
+                let text = Paragraph::new("Not enough screen space");
+                f.render_widget(text, f.size());
+                return;
+            }
 
             let chunks = vec![
                 Rect {
