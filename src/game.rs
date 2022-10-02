@@ -135,10 +135,10 @@ impl Game {
             return;
         }
         self.check_overlap(&new_head);
+        self.snake.push_back(new_head);
         if !self.check_apple() {
             self.snake.pop_front();
         }
-        self.snake.push_back(new_head);
         self.dir = dir;
     }
 
