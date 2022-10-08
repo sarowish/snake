@@ -74,39 +74,7 @@ pub fn run_ui(options: game::Options) -> Result<(), Box<dyn Error>> {
                 return;
             }
 
-            let chunks = vec![
-                Rect {
-                    x,
-                    y,
-                    width: (game.board.0 * 2 + 2) as u16,
-                    height: (game.board.1 + 2) as u16,
-                },
-                Rect {
-                    x,
-                    y: y + (game.board.1 + 2) as u16,
-                    width: 38,
-                    height: 1,
-                },
-            ];
-            let mut text = Text::default();
-            for line in grid {
-                text.extend(Text::from(Spans::from(line)));
-            }
-
-            let text = Paragraph::new(text).block(
-                Block::default()
-                    .border_style(Style::default().fg(if game.is_game_over() {
-                        Color::Red
-                    } else if !game.is_running() {
-                        Color::Yellow
-                    } else {
-                        Color::Green
-                    }))
-                    .borders(Borders::ALL)
-                    .title("Snake"),
-            );
-            f.render_widget(text, chunks[0]);
-            let text = if game.is_game_over() {
+            let key_help = if game.is_game_over() {
                 Spans::from(vec![
                     Span::raw("Game is over. press "),
                     Span::styled("q", Style::default().fg(Color::Red)),
@@ -120,7 +88,40 @@ pub fn run_ui(options: game::Options) -> Result<(), Box<dyn Error>> {
             } else {
                 Spans::from(Span::raw("Controls: hjkl ←↓↑→, Quit: q, Pause: p"))
             };
-            f.render_widget(Paragraph::new(text), chunks[1]);
+
+            let chunks = vec![
+                Rect {
+                    x,
+                    y,
+                    width: (game.board.0 * 2 + 2) as u16,
+                    height: (game.board.1 + 2) as u16,
+                },
+                Rect {
+                    x,
+                    y: y + (game.board.1 + 2) as u16,
+                    width: (key_help.width() as u16).min(f.size().width - x),
+                    height: 1,
+                },
+            ];
+            let mut grid_text = Text::default();
+            for line in grid {
+                grid_text.extend(Text::from(Spans::from(line)));
+            }
+
+            let text = Paragraph::new(grid_text).block(
+                Block::default()
+                    .border_style(Style::default().fg(if game.is_game_over() {
+                        Color::Red
+                    } else if !game.is_running() {
+                        Color::Yellow
+                    } else {
+                        Color::Green
+                    }))
+                    .borders(Borders::ALL)
+                    .title("Snake"),
+            );
+            f.render_widget(text, chunks[0]);
+            f.render_widget(Paragraph::new(key_help), chunks[1]);
         })?;
 
         match events.next()? {
