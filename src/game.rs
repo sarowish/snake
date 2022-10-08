@@ -162,7 +162,7 @@ impl Game {
 
     pub fn check_overlap(&self, new_head: &Point) -> bool {
         for p in &self.snake {
-            if new_head == p {
+            if new_head == p && p != self.snake.front().unwrap() {
                 return true;
             }
         }

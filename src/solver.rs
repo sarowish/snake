@@ -170,7 +170,7 @@ impl<'a> Solver<'a> {
             let adj_points = self.get_adj_coords(&current_coord);
 
             for point in adj_points {
-                if point == *destination || !self.game.check_overlap(&point) {
+                if !self.game.check_overlap(&point) {
                     let dist = self.get_cell(&current_coord).distance + 1;
                     let adj_cell = self.get_mut_cell(&point);
 
@@ -214,7 +214,7 @@ impl<'a> Solver<'a> {
             let adj_points = self.get_adj_coords(&current_coord);
 
             for point in adj_points {
-                if point == *destination || !self.game.check_overlap(&point) {
+                if !self.game.check_overlap(&point) {
                     let distance = self.get_cell(&current_coord).distance + 1;
                     let adj_cell = self.get_mut_cell(&point);
 
