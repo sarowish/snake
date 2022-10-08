@@ -1,6 +1,7 @@
 mod event;
 mod game;
 mod interface;
+mod solver;
 
 use clap::{Arg, ArgAction, Command};
 use interface::run_ui;
@@ -74,6 +75,22 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .long("no-border")
                 .help("Disable borders")
                 .action(ArgAction::SetTrue),
+        )
+        .arg(
+            Arg::new("self_play")
+                .long("self-play")
+                .help("Run the game in self playing mode")
+                .action(ArgAction::SetTrue),
+        )
+        .arg(
+            Arg::new("path_alg")
+                .short('p')
+                .long("path-alg")
+                .help("Shortest path algorithm used for self playing mode")
+                .requires("self_play")
+                .default_value("bfs")
+                .value_name("ALG")
+                .value_parser(["astar", "bfs"]),
         )
         .get_matches();
 

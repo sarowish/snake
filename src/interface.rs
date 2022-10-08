@@ -1,5 +1,6 @@
 use crate::event::{Event, Events};
 use crate::game::{self, Direction, Game};
+use crate::solver::Solver;
 use std::{error::Error, io};
 use termion::event::Key;
 use termion::{input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
@@ -24,6 +25,7 @@ pub fn run_ui(options: game::Options) -> Result<(), Box<dyn Error>> {
     let events = Events::new(options.speed);
 
     let mut game: Game = Game::new(&options);
+    let game_area = Solver::new(&game, None).game_area;
 
     let mut dir = game.dir.clone();
     let apple_char = "🍎";
@@ -136,7 +138,14 @@ pub fn run_ui(options: game::Options) -> Result<(), Box<dyn Error>> {
                 Key::Char('p') => game.toggle_pause(),
                 _ => {}
             },
-            Event::Tick if game.is_running() => game.move_snake(dir.clone()),
+            Event::Tick if game.is_running() => {
+                if game.self_play {
+                    let mut solver = Solver::new(&game, Some(game_area.clone()));
+                    dir = solver.next_direction();
+                }
+
+                game.move_snake(dir.clone());
+            }
             _ => {}
         }
     }

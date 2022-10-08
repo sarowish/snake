@@ -1,3 +1,4 @@
+use crate::solver::PathAlgorithm;
 use clap::ArgMatches;
 use rand::{thread_rng, Rng};
 use std::collections::VecDeque;
@@ -11,11 +12,14 @@ pub struct Options {
     length: i32,
     direction: Direction,
     borders: bool,
+    self_play: bool,
+    path_alg: PathAlgorithm,
 }
 
 impl From<ArgMatches> for Options {
     fn from(matches: ArgMatches) -> Self {
         let direction = Direction::from(matches.get_one::<String>("direction").unwrap());
+        let path_alg = PathAlgorithm::from(matches.get_one::<String>("path_alg").unwrap());
 
         Options {
             width: *matches.get_one::<i32>("width").unwrap(),
@@ -26,11 +30,13 @@ impl From<ArgMatches> for Options {
             length: *matches.get_one::<i32>("length").unwrap(),
             direction,
             borders: !matches.get_flag("no_border"),
+            self_play: matches.get_flag("self_play"),
+            path_alg,
         }
     }
 }
 
-#[derive(PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Direction {
     Up,
     Down,
@@ -66,6 +72,8 @@ pub struct Game {
     pub dir: Direction,
     pub board: (i32, i32),
     borders: bool,
+    pub self_play: bool,
+    pub path_alg: PathAlgorithm,
     pub apple: Point,
     state: State,
 }
@@ -75,6 +83,11 @@ impl Game {
         assert!(
             Game::validate_initial_state(options),
             "initial state of the snake is invalid"
+        );
+
+        assert!(
+            !options.self_play || options.width % 2 == 0 && options.height % 2 == 0,
+            "height and width must be even for self playing mode"
         );
 
         let mut snake = VecDeque::new();
@@ -97,9 +110,15 @@ impl Game {
             dir: options.direction.clone(),
             board: (options.width, options.height),
             borders: options.borders,
+            self_play: options.self_play,
+            path_alg: options.path_alg.clone(),
             apple,
             state: State::Running,
         }
+    }
+
+    pub fn board_size(&self) -> i32 {
+        self.board.0 * self.board.1
     }
 
     fn validate_initial_state(options: &Options) -> bool {
@@ -131,10 +150,9 @@ impl Game {
             Direction::Up => new_head.y -= 1,
             Direction::Down => new_head.y += 1,
         }
-        if !self.check_border(&mut new_head) {
-            return;
+        if self.check_border(&mut new_head) || self.check_overlap(&new_head) {
+            return self.game_over();
         }
-        self.check_overlap(&new_head);
         self.snake.push_back(new_head);
         if !self.check_apple() {
             self.snake.pop_front();
@@ -142,12 +160,14 @@ impl Game {
         self.dir = dir;
     }
 
-    fn check_overlap(&mut self, new_head: &Point) {
+    pub fn check_overlap(&self, new_head: &Point) -> bool {
         for p in &self.snake {
             if new_head == p {
-                return self.game_over();
+                return true;
             }
         }
+
+        false
     }
 
     fn check_border(&mut self, new_head: &mut Point) -> bool {
@@ -157,17 +177,21 @@ impl Game {
                 || new_head.y < 0
                 || new_head.y >= self.board.1)
         {
-            self.game_over();
-            false
+            true
         } else {
             new_head.x = new_head.x.rem_euclid(self.board.0);
             new_head.y = new_head.y.rem_euclid(self.board.1);
-            true
+            false
         }
     }
 
     fn check_apple(&mut self) -> bool {
         if self.snake.back().unwrap() == &self.apple {
+            if self.snake.len() == self.board_size() as usize {
+                self.game_over();
+                return true;
+            }
+
             let mut app = self.gen_apple();
             while self.snake.contains(&app) {
                 app = self.gen_apple();
@@ -207,7 +231,7 @@ impl Game {
     }
 }
 
-#[derive(PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Point {
     pub x: i32,
     pub y: i32,
@@ -216,6 +240,33 @@ pub struct Point {
 impl Point {
     pub fn new(x: i32, y: i32) -> Self {
         Self { x, y }
+    }
+
+    pub fn adjacent_point(&self, direction: &Direction) -> Point {
+        match direction {
+            Direction::Up => Point::new(self.x, self.y - 1),
+            Direction::Down => Point::new(self.x, self.y + 1),
+            Direction::Left => Point::new(self.x - 1, self.y),
+            Direction::Right => Point::new(self.x + 1, self.y),
+        }
+    }
+
+    pub fn direction_to(&self, other: &Point) -> Option<Direction> {
+        if self.x - 1 == other.x && self.y == other.y {
+            Some(Direction::Left)
+        } else if self.x + 1 == other.x && self.y == other.y {
+            Some(Direction::Right)
+        } else if self.x == other.x && self.y - 1 == other.y {
+            Some(Direction::Up)
+        } else if self.x == other.x && self.y + 1 == other.y {
+            Some(Direction::Down)
+        } else {
+            None
+        }
+    }
+
+    pub fn manhattan_distance(&self, other: &Point) -> u32 {
+        self.x.abs_diff(other.x) + self.y.abs_diff(other.y)
     }
 }
 
