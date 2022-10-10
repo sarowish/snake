@@ -260,7 +260,7 @@ impl<'a> Solver<'a> {
         let snake_length = self.game.snake.len();
 
         path.iter()
-            .chain(self.game.snake.iter().skip(1).take(snake_length - 2))
+            .chain(self.game.snake.range(1..snake_length - 1))
             .enumerate()
             .for_each(|(count, point)| self.get_mut_cell(point).circuit_idx = count);
     }
