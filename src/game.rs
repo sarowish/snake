@@ -101,20 +101,20 @@ impl Game {
             }
         }
 
-        let mut rng = thread_rng();
-        let apple_x = rng.gen_range(0..options.width);
-        let apple_y = rng.gen_range(0..options.height);
-        let apple = Point::new(apple_x, apple_y);
-        Game {
+        let mut game = Game {
             snake,
             dir: options.direction.clone(),
             board: (options.width, options.height),
             borders: options.borders,
             self_play: options.self_play,
             path_alg: options.path_alg.clone(),
-            apple,
+            apple: Point::new(0, 0),
             state: State::Running,
-        }
+        };
+
+        game.gen_apple();
+
+        game
     }
 
     pub fn board_size(&self) -> i32 {
@@ -192,22 +192,26 @@ impl Game {
                 return true;
             }
 
-            let mut app = self.gen_apple();
-            while self.snake.contains(&app) {
-                app = self.gen_apple();
-            }
-            self.apple = app;
+            self.gen_apple();
+
             true
         } else {
             false
         }
     }
 
-    fn gen_apple(&self) -> Point {
+    fn gen_apple(&mut self) {
         let mut rng = thread_rng();
-        let x = rng.gen_range(0..self.board.0);
-        let y = rng.gen_range(0..self.board.1);
-        Point::new(x, y)
+
+        self.apple = loop {
+            let x = rng.gen_range(0..self.board.0);
+            let y = rng.gen_range(0..self.board.1);
+            let apple = Point::new(x, y);
+
+            if !self.snake.contains(&apple) {
+                break apple;
+            }
+        }
     }
 
     fn game_over(&mut self) {
