@@ -33,7 +33,8 @@ impl Events {
             if tx1.send(Event::Tick).is_err() {
                 break;
             }
-            thread::sleep(Duration::from_millis(f64::floor(1000.0 / speed) as u64));
+
+            thread::sleep(Duration::from_micros(f64::floor(1_000_000.0 / speed) as u64));
         });
 
         Events {
