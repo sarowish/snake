@@ -205,6 +205,10 @@ impl<'a> Solver<'a> {
             ..
         }) = open_list.pop()
         {
+            if closed_list[current_coord.y as usize][current_coord.x as usize] {
+                continue;
+            }
+
             if current_coord == *destination {
                 return self.traverse_path(destination);
             }
