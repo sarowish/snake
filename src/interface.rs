@@ -86,7 +86,9 @@ pub fn run_ui(options: game::Options) -> Result<(), Box<dyn Error>> {
             } else if !game.is_running() {
                 Spans::from(Span::raw("Paused"))
             } else {
-                Spans::from(Span::raw("Controls: hjkl ←↓↑→, Quit: q, Pause: p"))
+                Spans::from(Span::raw(
+                    "Controls: wasd hjkl ←↓↑→, Quit: q, Pause: p space",
+                ))
             };
 
             let chunks = vec![
@@ -127,16 +129,16 @@ pub fn run_ui(options: game::Options) -> Result<(), Box<dyn Error>> {
         match events.next()? {
             Event::Input(key) => match key {
                 Key::Char('q') => break,
-                Key::Char('h') | Key::Left => dir = Direction::Left,
-                Key::Char('j') | Key::Down => dir = Direction::Down,
-                Key::Char('k') | Key::Up => dir = Direction::Up,
-                Key::Char('l') | Key::Right => dir = Direction::Right,
+                Key::Char('a') | Key::Char('h') | Key::Left => dir = Direction::Left,
+                Key::Char('s') | Key::Char('j') | Key::Down => dir = Direction::Down,
+                Key::Char('w') | Key::Char('k') | Key::Up => dir = Direction::Up,
+                Key::Char('d') | Key::Char('l') | Key::Right => dir = Direction::Right,
                 Key::Char('r') => {
                     game = Game::new(&options);
                     dir = game.dir.clone();
                     continue;
                 }
-                Key::Char('p') => game.toggle_pause(),
+                Key::Char('p') | Key::Char(' ') => game.toggle_pause(),
                 _ => {}
             },
             Event::Tick if game.is_running() => {
