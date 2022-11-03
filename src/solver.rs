@@ -286,18 +286,15 @@ impl<'a> Solver<'a> {
             let path = self.find_shortest_path(&self.game.apple);
 
             if !path.is_empty() {
-                let tail_idx = self.get_cell(self.game.snake.front().unwrap()).circuit_idx;
                 let head_idx = self.get_cell(&path[0]).circuit_idx;
                 let next_idx = self.get_cell(&path[1]).circuit_idx;
                 let apple_idx = self.get_cell(&self.game.apple).circuit_idx;
 
-                if !(path.len() == 1 && apple_idx.abs_diff(tail_idx) == 1) {
-                    let head_idx_rel = self.distance_to_tail(head_idx);
-                    let next_idx_rel = self.distance_to_tail(next_idx);
-                    let apple_idx_rel = self.distance_to_tail(apple_idx);
-                    if next_idx_rel > head_idx_rel && next_idx_rel <= apple_idx_rel {
-                        return head_coord.direction_to(&path[1]).unwrap();
-                    }
+                let head_idx_rel = self.distance_to_tail(head_idx);
+                let next_idx_rel = self.distance_to_tail(next_idx);
+                let apple_idx_rel = self.distance_to_tail(apple_idx);
+                if next_idx_rel > head_idx_rel && next_idx_rel <= apple_idx_rel {
+                    return head_coord.direction_to(&path[1]).unwrap();
                 }
             }
         }
