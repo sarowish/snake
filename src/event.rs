@@ -1,31 +1,30 @@
-use std::io;
+use crossterm::event::{Event as CEvent, KeyEvent};
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
-use termion::event::Key;
-use termion::input::TermRead;
 
 pub enum Event {
-    Input(Key),
+    Input(KeyEvent),
     Tick,
 }
 
-pub struct Events {
+pub struct EventHandle {
     rx: mpsc::Receiver<Event>,
     _input_handle: thread::JoinHandle<()>,
     _tick_handle: thread::JoinHandle<()>,
 }
 
-impl Events {
-    pub fn new(speed: f64) -> Events {
+impl EventHandle {
+    pub fn new(speed: f64) -> EventHandle {
         let (tx, rx) = mpsc::channel();
         let tx1 = mpsc::Sender::clone(&tx);
         let _input_handle = thread::spawn(move || {
-            let stdin = io::stdin();
-            for key in stdin.keys().flatten() {
-                if let Err(err) = tx.send(Event::Input(key)) {
-                    eprintln!("{}", err);
-                    return;
+            while let Ok(event) = crossterm::event::read() {
+                if let CEvent::Key(key) = event {
+                    if let Err(err) = tx.send(Event::Input(key)) {
+                        eprintln!("{}", err);
+                        return;
+                    }
                 }
             }
         });
@@ -37,7 +36,7 @@ impl Events {
             thread::sleep(Duration::from_micros(f64::floor(1_000_000.0 / speed) as u64));
         });
 
-        Events {
+        EventHandle {
             rx,
             _input_handle,
             _tick_handle,

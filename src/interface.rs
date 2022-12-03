@@ -1,28 +1,31 @@
-use crate::event::{Event, Events};
+use crate::event::{Event, EventHandle};
 use crate::game::{self, Direction, Game};
 use crate::solver::Solver;
+use crossterm::event::KeyCode;
+use crossterm::execute;
+use crossterm::terminal::{
+    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
+};
 use std::{error::Error, io};
-use termion::event::Key;
-use termion::{input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
 use tui::layout::Rect;
 use tui::style::Color;
 use tui::style::Style;
 use tui::text::{Span, Spans, Text};
 use tui::widgets::Paragraph;
 use tui::{
-    backend::TermionBackend,
+    backend::CrosstermBackend,
     widgets::{Block, Borders},
     Terminal,
 };
 
 pub fn run_ui(options: game::Options) -> Result<(), Box<dyn Error>> {
-    let stdout = io::stdout().into_raw_mode()?;
-    let stdout = MouseTerminal::from(stdout);
-    let stdout = AlternateScreen::from(stdout);
-    let backend = TermionBackend::new(stdout);
+    enable_raw_mode()?;
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen)?;
+    let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    let events = Events::new(options.speed);
+    let events = EventHandle::new(options.speed);
 
     let mut game: Game = Game::new(&options);
     let game_area = Solver::new(&game, None).game_area;
@@ -127,18 +130,18 @@ pub fn run_ui(options: game::Options) -> Result<(), Box<dyn Error>> {
         })?;
 
         match events.next()? {
-            Event::Input(key) => match key {
-                Key::Char('q') => break,
-                Key::Char('a') | Key::Char('h') | Key::Left => dir = Direction::Left,
-                Key::Char('s') | Key::Char('j') | Key::Down => dir = Direction::Down,
-                Key::Char('w') | Key::Char('k') | Key::Up => dir = Direction::Up,
-                Key::Char('d') | Key::Char('l') | Key::Right => dir = Direction::Right,
-                Key::Char('r') => {
+            Event::Input(key) => match key.code {
+                KeyCode::Char('q') => break,
+                KeyCode::Char('a') | KeyCode::Char('h') | KeyCode::Left => dir = Direction::Left,
+                KeyCode::Char('s') | KeyCode::Char('j') | KeyCode::Down => dir = Direction::Down,
+                KeyCode::Char('w') | KeyCode::Char('k') | KeyCode::Up => dir = Direction::Up,
+                KeyCode::Char('d') | KeyCode::Char('l') | KeyCode::Right => dir = Direction::Right,
+                KeyCode::Char('r') => {
                     game = Game::new(&options);
                     dir = game.dir.clone();
                     continue;
                 }
-                Key::Char('p') | Key::Char(' ') => game.toggle_pause(),
+                KeyCode::Char('p') | KeyCode::Char(' ') => game.toggle_pause(),
                 _ => {}
             },
             Event::Tick if game.is_running() => {
@@ -152,5 +155,9 @@ pub fn run_ui(options: game::Options) -> Result<(), Box<dyn Error>> {
             _ => {}
         }
     }
+
+    disable_raw_mode()?;
+    execute!(io::stdout(), LeaveAlternateScreen)?;
+
     Ok(())
 }

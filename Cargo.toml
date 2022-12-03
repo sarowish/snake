@@ -9,8 +9,8 @@ edition = "2021"
 
 [dependencies]
 rand = "0.8.5"
-tui = { version = "0.18.0", default-features = false, features = ["termion"] }
-termion = "1.5.6"
+tui = { version = "0.18.0", default-features = false, features = ["crossterm"] }
+crossterm = "0.25.0"
 clap = "4.0.6"
 
 [features]
